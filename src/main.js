@@ -10,7 +10,7 @@ document.querySelector('#app').innerHTML = `
       <button id="encryptBtn">Encrypt</button>
     </div>
     <div class="card">
-      <label for="outputHash">Encrypted (12-char hash):</label><br>
+        <label for="outputHash">Encrypted (8-char hash):</label><br>
       <input id="outputHash" type="text" readonly style="width: 300px;" />
       <button id="copyBtn">Copy</button>
     </div>
@@ -28,16 +28,25 @@ function hash12(str) {
   const base62 = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
   let out = '';
   let n = Math.abs(hash);
-  for (let i = 0; i < 12; i++) {
+  for (let i = 0; i < 8; i++) {
     out += base62[n % 62];
     n = Math.floor(n / 62);
   }
   return out;
 }
 
-document.getElementById('encryptBtn').onclick = function() {
+async function hash8SHA(text) {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(text);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const base64 = btoa(String.fromCharCode(...hashArray));
+  // Remove non-alphanumeric chars and take first 8
+  return base64.replace(/[^a-zA-Z0-9]/g, '').slice(0, 8);
+}
+document.getElementById('encryptBtn').onclick = async function() {
   const input = document.getElementById('inputText').value;
-  document.getElementById('outputHash').value = input ? hash12(input) : '';
+  document.getElementById('outputHash').value = input ? await hash8SHA(input) : '';
 };
 
 document.getElementById('copyBtn').onclick = function() {
